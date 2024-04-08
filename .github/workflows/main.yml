@@ -1,0 +1,37 @@
+name: Nightwatch Test
+on:
+  - pull_request
+  - push
+  - workflow_dispatch
+ 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with: 
+          cache: 'npm'
+      - name: 'Use Node.js ${{ matrix.node-version }}'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '21'
+          cache: npm
+      - name: Install Dependency npm-install
+        run: |
+          npm ci
+          sudo apt-get install xvfb
+      - name: Run Nightwatch tests
+        run: xvfb-run --auto-servernum npm test -- --env chrome
+       # Step to capture test results as artifacts
+      - name: Archive test results
+        if: always()  
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: tests_output 
+      - name: Send notifications
+        if: failure() 
+        run: |
+          echo "Test failures has occur. Please check further for failure in the test reports for details."
